@@ -51,8 +51,10 @@ def getMidpointsAndDirection(width,height,limit):
 
 def getPixelRate(midstart,midend,totalframes):
     #if Up or Down
-    midx = midstart[0] - midend[0]
-    midy = midstart[1] - midend[1]
+    midx = midend[0] - midstart[0]
+    midy = midend[1] - midstart[1]
+    print('x,y: ',midx,midy)
+    slope = midy/midx
     pixelRateX = midx/totalframes
     pixelRateY = midy/totalframes
     return [pixelRateX,pixelRateY]
@@ -69,13 +71,13 @@ def getMovingMidpointArray(midstart,slopeX,slopeY):
 
 
 basedir = pathjoin(os.path.dirname(os.path.abspath(__file__)),'images')
-#imageList = os.listdir(basedir)
-imageList = ['image00005.jpg']
+imageList = os.listdir(basedir)
+#imageList = ['image00005.jpg']
 
 for index,i in enumerate(imageList):
     #makes new directory of images to store
     newdir = pathjoin(basedir,i[0:len(i)-4])
-    #os.mkdir(newdir)
+    os.mkdir(newdir)
     
     #get image (width,height)
     im = Image.open(pathjoin(basedir,i))
@@ -89,28 +91,35 @@ for index,i in enumerate(imageList):
     midstart,midend,direction = getMidpointsAndDirection(width,height,limit)
     slopeX,slopeY = getPixelRate(midstart,midend,totalframes)
 
+    print('start', midstart, midend, direction)
+    print('slope',slopeX,slopeY)
     #get the individual midpoints
     movingMidpoint = getMovingMidpointArray(midstart,slopeX,slopeY)
 
+    print('start: ', movingMidpoint[0],'midpoint: ', movingMidpoint[math.floor(len(movingMidpoint)/2)] ,' end: ', movingMidpoint[len(movingMidpoint)-1])
     #get the image crops
-    mid = limit/2
-    #cropArray = []
+    mid = math.floor(limit/2)
+    cropArray = []
 
-    draw = ImageDraw.Draw(im)
+    #draw = ImageDraw.Draw(im)
     #xy = (movingMidpoint[0][0],movingMidpoint[0][1],movingMidpoint[71][0],movingMidpoint[71][1])
     #draw.line(xy,fill=128,width=3)
     
     
  
     for index,i in enumerate(movingMidpoint):
-        #box = (i[0]-mid,i[1]-mid,i[0]+mid,i[1]+mid)
-        box = (i[0]-20,i[1]-20,i[0]+20,i[1]+20)
-        draw.rectangle(box,fill=128,width=3)
-        #region = im.crop(box)
-        #cropArray.append(region)
-        #region.save(pathjoin(newdir,str(index)+'.jpg'))
+        box = (i[0]-mid,i[1]-mid,i[0]+mid,i[1]+mid)
+        #box = (i[0]-20,i[1]-20,i[0]+20,i[1]+20)
+        #draw.rectangle(box,fill=128,width=3)
+        region = im.crop(box)
+        cropArray.append(region)
+        starter = 'pic0000' if index < 10 else 'pic000'
+        region.save(pathjoin(newdir,starter+str(index)+'.jpg'))
 
-    im.show()
+    #trigger ffmpeg
+    #ffmpeg -f image2 -r 1/5 -i image%05d.png -vcodec mpeg4 -y movie.mp4
+
+    #im.show()
 
 
 
